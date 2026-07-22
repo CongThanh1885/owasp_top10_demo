@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OWASP Fixed App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <h1>OWASP Demo App (Fixed)</h1>
+    <ul>
+        <li><a href="{{ url_for('login') }}">Login</a></li>
+        <li><a href="{{ url_for('comment') }}">Comment</a></li>
+        <li><a href="{{ url_for('change_password') }}">Change Password</a></li>
+        <li><a href="{{ url_for('upload_file') }}">Upload File</a></li>
+    </ul>
+</body>
+
+</html>

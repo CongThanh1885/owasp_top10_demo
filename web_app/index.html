@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OWASP Demo App</title>
+</head>
+
+<body>
+    <h2>Login (SQLi)</h2>
+    <form method="POST" action="http://localhost:5656/login">
+        <input name="username" placeholder="username">
+        <input name="password" placeholder="password">
+        <button type="submit">Login</button>
+    </form>
+
+    <h2>Comment (XSS)</h2>
+    <form method="POST" action="http://localhost:5656/comment">
+        <input name="comment" placeholder="comment">
+        <button type="submit">Post</button>
+    </form>
+
+    <h2>Change Password (CSRF)</h2>
+    <form method="POST" action="http://localhost:5656/change-password">
+        <input name="username" placeholder="username">
+        <input name="newPassword" placeholder="new password">
+        <button type="submit">Change</button>
+    </form>
+
+    <h2>Upload File (Insecure)</h2>
+    <form method="POST" action="http://localhost:5656/upload" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <button type="submit">Upload</button>
+    </form>
+</body>
+
+</html>

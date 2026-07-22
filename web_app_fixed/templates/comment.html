@@ -1,0 +1,8 @@
+<h2>Comment (XSS Fixed)</h2>
+<form method="POST">
+    <input name="comment" placeholder="comment">
+    <button type="submit">Post</button>
+</form>
+{% if comment %}
+<p>You posted: {{ comment }}</p>
+{% endif %}
