@@ -1,0 +1,4 @@
+semgrep-fixed.json
+semgrep-fixed.sarif
+semgrep-vulnerable.json
+semgrep-vulnerable.sarif

@@ -18,6 +18,20 @@ Repository này bao gồm hai ứng dụng có chủ đích khác nhau để ki�
 
 ## 2. Triển khai trên máy local
 
+### Chạy tự động: Semgrep -> Docker build -> deploy
+
+Trên PowerShell, chạy ứng dụng đã khắc phục (mặc định):
+```powershell
+.\scripts\deploy.ps1
+```
+
+Chạy bản vulnerable để phục vụ pentest:
+```powershell
+.\scripts\deploy.ps1 -Profile vulnerable
+```
+
+Script sẽ dừng nếu `web_app_fixed` có phát hiện Semgrep, xuất báo cáo JSON/SARIF, build cả hai image và khởi động profile được chọn. Các phát hiện của `web_app` là có chủ đích nên chỉ cảnh báo và vẫn tiếp tục deploy. Dùng `-SkipVulnerableScan` nếu chỉ cần kiểm tra bản fixed.
+
 ### Build cả hai image
 ```bash
 docker compose --profile vulnerable --profile fixed build
