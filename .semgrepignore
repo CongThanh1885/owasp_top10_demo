@@ -1,0 +1,6 @@
+.git/
+**/screenshots_request-response/
+**/uploads/
+**/test.php
+**/node_modules/
+**/__pycache__/

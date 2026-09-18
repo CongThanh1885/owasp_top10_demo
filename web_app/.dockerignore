@@ -1,2 +1,7 @@
+.git
+screenshots_request-response
+uploads
+test.php
+npm-debug.log*
 node_modules
 npm-debug.log

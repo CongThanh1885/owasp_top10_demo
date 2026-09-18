@@ -1,0 +1,16 @@
+services:
+  vulnerable:
+    build:
+      context: ./web_app
+    image: owasp-top10-vulnerable
+    profiles: [vulnerable]
+    ports:
+      - "5656:5656"
+
+  fixed:
+    build:
+      context: ./web_app_fixed
+    image: owasp-top10-fixed
+    profiles: [fixed]
+    ports:
+      - "5656:5656"

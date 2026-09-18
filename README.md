@@ -1,34 +1,79 @@
-# 🚀 HƯỚNG DẪN KHỞI CHẠY VÀ KIỂM THỬ ỨNG DỤNG (README)
+# Demo OWASP Top 10
 
-Tài liệu này hướng dẫn cách khởi chạy ứng dụng web thử nghiệm trong môi trường Docker, đồng thời mô tả chi tiết **kết quả phản hồi (Response) thực tế** trên **Burp Suite** và **Postman** khi tiến hành kiểm thử trên cả hai phiên bản: **Ứng dụng chứa lỗ hổng (Vulnerable App)** và **Ứng dụng đã khắc phục (Fixed App)**.
+Repository này bao gồm hai ứng dụng có chủ đích khác nhau để kiểm thử bảo mật trên máy local:
+
+- `web_app/`: Ứng dụng Node.js/Express chứa bốn lỗ hổng được tạo có chủ đích.
+- `web_app_fixed/`: Ứng dụng Flask với các biện pháp khắc phục tương ứng.
+
+Đây là dự án phục vụ đào tạo. Chỉ chạy trên `localhost` hoặc mạng lab được cô lập. Không bao giờ đưa `web_app/` lên Internet hoặc sử dụng lại thông tin đăng nhập của ứng dụng trong hệ thống thực tế.
 
 ---
 
-## 🛠️ 1. HƯỚNG DẪN KHỞI CHẠY (DEPLOYMENT)
+## 1. Yêu cầu chuẩn bị
 
-### 🔴 Cách 1: Chạy ứng dụng có lỗ hổng (Vulnerable App)
+- Docker Desktop với Linux engine đang chạy.
+- Docker Compose v2 (`docker compose version`).
+- Không bắt buộc: Semgrep để quét mã nguồn trên máy local.
+- Cổng `5656` chưa được sử dụng trên máy host.
+
+## 2. Triển khai trên máy local
+
+### Build cả hai image
 ```bash
-cd web_app
-docker build -t web_app_vuln .
-docker run -p 5656:5656 web_app_vuln
+docker compose --profile vulnerable --profile fixed build
 ```
-🌐 **Địa chỉ truy cập:** `http://localhost:5656`
 
----
-
-### 🟢 Cách 2: Chạy ứng dụng đã khắc phục (Fixed App)
+Khởi động ứng dụng đã khắc phục ở chế độ chạy nền:
 ```bash
-cd web_app_fixed
-docker build -t web_app_fixed .
-docker run -p 5656:5656 web_app_fixed
+docker compose --profile fixed up -d
+curl.exe http://localhost:5656/
 ```
-🌐 **Địa chỉ truy cập:** `http://localhost:5656`
 
----
+Dừng ứng dụng trước khi khởi động phiên bản còn lại:
+```bash
+docker compose --profile fixed down
+docker compose --profile vulnerable up -d
+curl.exe http://localhost:5656/
+```
 
-## 🧪 2. CHI TIẾT KIỂM THỬ BẰNG BURP SUITE & POSTMAN
+Các lệnh quản lý vòng đời thường dùng:
+```bash
+docker compose --profile fixed logs -f
+docker compose --profile vulnerable logs -f
+docker compose --profile fixed down
+docker compose --profile vulnerable down
+```
 
-### 1. SQL Injection (SQLi) - Endpoint: `POST /login`
+Chỉ chạy một profile tại một thời điểm vì cả hai ứng dụng đều sử dụng cổng `5656` trên host.
+
+## 3. CI/CD và quét mã nguồn
+
+GitHub Actions trong `.github/workflows/ci-cd.yml` chạy khi có pull request và khi push lên nhánh `main` hoặc `master`:
+
+1. Semgrep phải kiểm tra thành công `web_app_fixed`.
+2. Semgrep quét `web_app` và tải các phát hiện dự kiến lên dưới dạng artifact.
+3. Cả hai Docker image đều được build.
+4. Khi push lên `main`, các image được publish lên GitHub Container Registry.
+
+Chạy bước kiểm tra bắt buộc cho ứng dụng đã khắc phục trên máy local:
+```bash
+semgrep scan --config p/owasp-top-ten --error --exclude-rule python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host web_app_fixed
+```
+
+Quét ứng dụng đào tạo có chủ đích chứa lỗ hổng:
+```bash
+semgrep scan --config p/owasp-top-ten web_app
+```
+
+Rule kiểm tra bind host chỉ được loại trừ trong lần quét ứng dụng đã khắc phục vì Flask phải bind tới `0.0.0.0` bên trong container. Image đã khắc phục chạy bằng user không phải root.
+
+## 4. Quy trình pentest
+
+Sử dụng Burp Suite hoặc Postman để gửi request tới `http://localhost:5656`. Khởi động lại container giữa các test case khi cần database in-memory hoặc session mới.
+
+Đối với ứng dụng đã khắc phục, trước tiên mở `GET /change-password` trong cùng một browser hoặc proxy session. Response sẽ tạo session và chứa CSRF token trong form. Sử dụng lại session và token đó khi gửi request đổi mật khẩu hợp lệ.
+
+### 4.1 SQL Injection: `POST /login`
 
 #### 📡 Yêu cầu gửi đi (Request Vector)
 * **URL:** `POST http://localhost:5656/login`
@@ -57,7 +102,7 @@ docker run -p 5656:5656 web_app_fixed
 
 ---
 
-### 2. Cross-Site Scripting (XSS) - Endpoint: `POST /comment`
+### 4.2 Cross-Site Scripting (XSS): `POST /comment`
 
 #### 📡 Yêu cầu gửi đi (Request Vector)
 * **URL:** `POST http://localhost:5656/comment`
@@ -92,7 +137,7 @@ docker run -p 5656:5656 web_app_fixed
 
 ---
 
-### 3. Cross-Site Request Forgery (CSRF) - Endpoint: `POST /change-password`
+### 4.3 Cross-Site Request Forgery (CSRF): `POST /change-password`
 
 #### 📡 Yêu cầu gửi đi (Request Vector - Không chứa Anti-CSRF Token)
 * **URL:** `POST http://localhost:5656/change-password`
@@ -110,7 +155,7 @@ docker run -p 5656:5656 web_app_fixed
   * **🔴 App Vuln:**
     * **HTTP Status:** `200 OK`
     * **Response Body:** `Password changed!`
-    * *Giải thích:* Hệ thống chỉ kiểm tra session cookie hợp lệ mà không xác thực nguồn gốc request hay token, dẫn đến mật khẩu bị đổi thành `111`.
+    * *Giải thích:* Endpoint không yêu cầu CSRF token, nên một request POST có thể thay đổi mật khẩu.
   * **🟢 App Fixed (Thiếu token hoặc token sai):**
     * **HTTP Status:** `403 Forbidden`
     * **Response Body:** `CSRF detected!`
@@ -124,7 +169,7 @@ docker run -p 5656:5656 web_app_fixed
 
 ---
 
-### 4. Insecure File Upload - Endpoint: `POST /upload`
+### 4.4 Upload file không an toàn: `POST /upload`
 
 #### 📡 Yêu cầu gửi đi (Request Vector - Web Shell Payload)
 * **URL:** `POST http://localhost:5656/upload`
@@ -155,7 +200,7 @@ docker run -p 5656:5656 web_app_fixed
 
 ---
 
-## 🎯 3. KẾT LUẬN
+## 5. Tổng kết
 
 | Tiêu chí | 🔴 `web_app/` (Vulnerable) | 🟢 `web_app_fixed/` (Fixed) |
 | :--- | :--- | :--- |
