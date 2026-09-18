@@ -62,7 +62,7 @@ Chỉ chạy một profile tại một thời điểm vì cả hai ứng dụng 
 
 ## 3. CI/CD và quét mã nguồn
 
-GitHub Actions trong `.github/workflows/ci-cd.yml` chạy khi có pull request và khi push lên nhánh `main` hoặc `master`:
+GitHub Actions trong `.github/workflows/ci-cd.yml` chạy khi có pull request và khi push lên nhánh `main`:
 
 1. Semgrep phải kiểm tra thành công `web_app_fixed`.
 2. Semgrep quét `web_app` và tải các phát hiện dự kiến lên dưới dạng artifact.
