@@ -55,6 +55,11 @@ GitHub Actions trong `.github/workflows/ci-cd.yml` chạy khi có pull request v
 3. Cả hai Docker image đều được build.
 4. Khi push lên `main`, các image được publish lên GitHub Container Registry.
 
+Sau mỗi lần quét, workflow lưu báo cáo Semgrep ở định dạng JSON và SARIF dưới dạng artifact:
+
+- `semgrep-fixed-reports`
+- `semgrep-vulnerable-reports`
+
 Chạy bước kiểm tra bắt buộc cho ứng dụng đã khắc phục trên máy local:
 ```bash
 semgrep scan --config p/owasp-top-ten --error --exclude-rule python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host web_app_fixed
@@ -63,6 +68,11 @@ semgrep scan --config p/owasp-top-ten --error --exclude-rule python.flask.securi
 Quét ứng dụng đào tạo có chủ đích chứa lỗ hổng:
 ```bash
 semgrep scan --config p/owasp-top-ten web_app
+```
+
+Xuất báo cáo khi quét local:
+```bash
+semgrep scan --config p/owasp-top-ten --json-output semgrep-vulnerable.json --sarif-output semgrep-vulnerable.sarif web_app
 ```
 
 Rule kiểm tra bind host chỉ được loại trừ trong lần quét ứng dụng đã khắc phục vì Flask phải bind tới `0.0.0.0` bên trong container. Image đã khắc phục chạy bằng user không phải root.

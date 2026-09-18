@@ -30,7 +30,19 @@ jobs:
         run: >-
           semgrep scan --config p/owasp-top-ten --error
           --exclude-rule python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host
+          --json-output semgrep-fixed.json
+          --sarif-output semgrep-fixed.sarif
           web_app_fixed
+
+      - name: Upload fixed-app reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-fixed-reports
+          path: |
+            semgrep-fixed.json
+            semgrep-fixed.sarif
+          if-no-files-found: warn
 
   semgrep-vulnerable:
     name: Semgrep vulnerable app (informational)
@@ -49,14 +61,20 @@ jobs:
         run: python -m pip install --disable-pip-version-check semgrep==1.177.0
 
       - name: Scan vulnerable app
-        run: semgrep scan --config p/owasp-top-ten --json --output semgrep-vulnerable.json web_app
+        run: >-
+          semgrep scan --config p/owasp-top-ten
+          --json-output semgrep-vulnerable.json
+          --sarif-output semgrep-vulnerable.sarif
+          web_app
 
-      - name: Upload vulnerable-app findings
+      - name: Upload vulnerable-app reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: semgrep-vulnerable-findings
-          path: semgrep-vulnerable.json
+          name: semgrep-vulnerable-reports
+          path: |
+            semgrep-vulnerable.json
+            semgrep-vulnerable.sarif
           if-no-files-found: warn
 
   docker:
